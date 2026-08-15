@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }} - MediaHub{% endblock %}
+{% block content %}
+{% if not item.is_visible %}<div class="alert hidden-notice mb-3">此作品当前<strong>未公开展示</strong>，只有作者本人和管理员可以查看。</div>{% endif %}
+<div class="watch-layout">
+    <section class="watch-main">
+        <div class="viewer">
+            {% if item.media_type == "video" %}
+                <video controls preload="metadata"><source src="/content/{{ item.id }}" type="{{ item.mime_type }}">浏览器不支持该视频格式。</video>
+            {% else %}
+                <img class="detail-image" src="/content/{{ item.id }}" alt="{{ item.title }}">
+            {% endif %}
+        </div>
+        <div class="watch-info">
+            <h1>{{ item.title }}</h1>
+            <div class="watch-submeta"><span>👁 {{ item.views }}</span><span>↓ {{ item.downloads }}</span><span>{{ item.created_at.strftime("%Y-%m-%d %H:%M") }}</span><span>{{ "%.2f"|format(item.file_size / 1024 / 1024) }} MB</span></div>
+            <div class="action-row">
+                <a href="/download/{{ item.id }}" class="btn btn-primary">↓ 下载原文件</a>
+                <a href="/user/{{ item.owner.id }}" class="btn btn-outline-primary">查看作者</a>
+                {% if current_user and (current_user.id == item.user_id or current_user.is_admin) %}
+                <form action="/media/{{ item.id }}/visibility" method="post"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="btn btn-outline-primary">{{ "停止展示" if item.is_visible else "重新展示" }}</button></form>
+                <form action="/media/{{ item.id }}/delete" method="post" onsubmit="return confirm('确定删除这个媒体文件吗？此操作不可恢复。')"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="btn btn-outline-danger">删除</button></form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="author-panel">
+            <a href="/user/{{ item.owner.id }}" class="avatar-circle small-avatar">{{ item.owner.username[:1]|upper }}</a>
+            <div class="author-copy"><a href="/user/{{ item.owner.id }}">{{ item.owner.username }}</a><span>{{ "公开作品" if item.is_visible else "未公开作品" }} · 原文件：{{ item.original_filename }}</span></div>
+        </div>
+        {% if item.description %}<div class="description-box">{{ item.description }}</div>{% endif %}
+
+        <section id="comments" class="comments-section">
+            <div class="section-heading compact"><div><h2>评论</h2><p>{{ comments|length }} 条评论</p></div></div>
+            {% if current_user %}
+            <form action="/media/{{ item.id }}/comments" method="post" class="comment-form">
+                <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+                <textarea class="form-control" name="content" rows="3" maxlength="1000" placeholder="发一条友善的评论……" required></textarea>
+                <div class="comment-submit"><span>最多 1000 个字符</span><button class="btn btn-primary">发表评论</button></div>
+            </form>
+            {% else %}<div class="login-comment">请先 <a href="/login">登录</a> 后发表评论。</div>{% endif %}
+            <div class="comment-list">
+            {% for comment in comments %}
+                <article class="comment-item">
+                    <a href="/user/{{ comment.author.id }}" class="tiny-avatar comment-avatar">{{ comment.author.username[:1]|upper }}</a>
+                    <div class="comment-main">
+                        <div class="comment-head"><div><a href="/user/{{ comment.author.id }}">{{ comment.author.username }}</a><span>{{ comment.created_at.strftime("%Y-%m-%d %H:%M") }}</span></div>
+                        {% if current_user and (current_user.id == comment.user_id or current_user.id == item.user_id or current_user.is_admin) %}<form action="/comments/{{ comment.id }}/delete" method="post" onsubmit="return confirm('删除这条评论吗？')"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="comment-delete">删除</button></form>{% endif %}</div>
+                        <div class="comment-content">{{ comment.content }}</div>
+                    </div>
+                </article>
+            {% else %}<div class="text-secondary py-4">还没有评论，来发表第一条吧。</div>{% endfor %}
+            </div>
+        </section>
+    </section>
+
+    <aside class="recommend-side">
+        <div class="side-title">接着看</div>
+        {% for related in related_items %}
+        <article class="side-item">
+            <a class="side-thumb" href="/media/{{ related.id }}">
+                {% if related.media_type == "image" %}<img src="/content/{{ related.id }}" alt="{{ related.title }}" loading="lazy">{% else %}<video muted preload="metadata"><source src="/content/{{ related.id }}" type="{{ related.mime_type }}"></video>{% endif %}
+            </a>
+            <div class="side-copy"><a class="side-item-title" href="/media/{{ related.id }}">{{ related.title }}</a><a class="side-owner" href="/user/{{ related.owner.id }}">{{ related.owner.username }}</a><span>👁 {{ related.views }} · ↓ {{ related.downloads }}</span></div>
+        </article>
+        {% else %}<div class="text-secondary small">暂无其他公开作品。</div>{% endfor %}
+    </aside>
+</div>
+{% endblock %}

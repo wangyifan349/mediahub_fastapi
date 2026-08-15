@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}MediaHub{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+<header class="site-header sticky-top">
+    <div class="topbar px-3 px-xl-4">
+        <a class="brand" href="/"><span class="brand-play">▶</span><span class="brand-text">MediaHub</span></a>
+        <nav class="top-links d-none d-lg-flex"><a href="/">首页</a><a href="/?kind=video">视频</a><a href="/?kind=image">图片</a></nav>
+        <div class="search-shell">
+            <form class="top-search" action="/" method="get" autocomplete="off">
+                <input id="liveSearchInput" name="q" value="{{ q|default('') }}" placeholder="搜索视频、图片或用户" aria-label="搜索">
+                <button type="submit" aria-label="搜索">搜索</button>
+            </form>
+            <div id="searchSuggest" class="search-suggest" hidden></div>
+        </div>
+        <div class="top-actions">
+            {% if current_user %}
+                <a class="nav-action d-none d-md-inline" href="/my">创作中心</a>
+                {% if current_user.is_admin %}<a class="nav-action d-none d-xl-inline" href="/admin/users">用户</a>{% endif %}
+                <a class="user-pill" href="/user/{{ current_user.id }}" title="个人主页"><span class="mini-avatar">{{ current_user.username[:1]|upper }}</span><span class="d-none d-xxl-inline">{{ current_user.username }}</span></a>
+                <a class="upload-button" href="/upload">+ 投稿</a>
+                <form action="/logout" method="post" class="m-0 d-none d-lg-block"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="plain-button" type="submit">退出</button></form>
+            {% else %}
+                <a class="nav-action" href="/login">登录</a><a class="upload-button register-button" href="/register">注册</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="mobile-nav d-lg-none px-3"><a href="/">首页</a><a href="/?kind=video">视频</a><a href="/?kind=image">图片</a>{% if current_user %}<a href="/my">创作中心</a><a href="/upload">投稿</a>{% endif %}</div>
+</header>
+<main class="page-shell px-3 px-xl-4 py-3 py-lg-4">
+    {% if flash %}<div class="alert alert-{{ flash.category }} alert-dismissible fade show mb-3" role="alert">{{ flash.message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endif %}
+    {% block content %}{% endblock %}
+</main>
+<footer class="site-footer px-3 px-xl-4 py-4 mt-4">MediaHub · FastAPI + Bootstrap · 图片与视频分享</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(() => {
+    const input = document.getElementById('liveSearchInput');
+    const panel = document.getElementById('searchSuggest');
+    if (!input || !panel) return;
+    let timer = null;
+    let controller = null;
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const closePanel = () => { panel.hidden = true; panel.innerHTML = ''; };
+    const render = data => {
+        const media = data.media || [];
+        const users = data.users || [];
+        if (!media.length && !users.length) {
+            panel.innerHTML = '<div class="suggest-empty">没有找到相近结果</div>';
+            panel.hidden = false;
+            return;
+        }
+        let html = '';
+        if (media.length) {
+            html += '<div class="suggest-title">作品</div>';
+            html += media.map(item => `<a class="suggest-item" href="/media/${item.id}"><span class="suggest-icon">${item.media_type === 'video' ? '▶' : '▧'}</span><span class="suggest-copy"><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.owner)} · LCS ${item.score}</small></span></a>`).join('');
+        }
+        if (users.length) {
+            html += '<div class="suggest-title">用户</div>';
+            html += users.map(user => `<a class="suggest-item" href="/user/${user.id}"><span class="suggest-avatar">${escapeHtml(user.username.slice(0,1).toUpperCase())}</span><span class="suggest-copy"><strong>${escapeHtml(user.username)}</strong><small>用户 · LCS ${user.score}</small></span></a>`).join('');
+        }
+        html += `<a class="suggest-all" href="/?q=${encodeURIComponent(data.query)}">查看全部搜索结果</a>`;
+        panel.innerHTML = html;
+        panel.hidden = false;
+    };
+    const refresh = () => {
+        const query = input.value.trim();
+        if (!query) return closePanel();
+        if (controller) controller.abort();
+        controller = new AbortController();
+        fetch(`/api/search?q=${encodeURIComponent(query)}`, {signal: controller.signal})
+            .then(response => response.ok ? response.json() : Promise.reject())
+            .then(render).catch(error => { if (error && error.name !== 'AbortError') closePanel(); });
+    };
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(refresh, 140); });
+    input.addEventListener('focus', () => { if (input.value.trim()) refresh(); });
+    document.addEventListener('click', event => { if (!event.target.closest('.search-shell')) closePanel(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closePanel(); });
+})();
+</script>
+</body>
+</html>

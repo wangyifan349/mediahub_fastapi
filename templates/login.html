@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}登录 - MediaHub{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <section class="auth-card">
+        <a class="auth-brand" href="/"><span>▶</span> MediaHub</a>
+        <div class="auth-heading"><h1>登录</h1><p>登录后即可投稿、评论和管理自己的作品。</p></div>
+        <form method="post" action="/login" class="auth-form">
+            <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+            <label>用户名<input class="form-control" name="username" autocomplete="username" required autofocus></label>
+            <label>密码<input class="form-control" type="password" name="password" autocomplete="current-password" required></label>
+            <button class="btn btn-primary w-100" type="submit">登录</button>
+        </form>
+        <div class="auth-foot">还没有账号？<a href="/register">立即注册</a></div>
+    </section>
+</div>
+{% endblock %}

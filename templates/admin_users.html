@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - MediaHub{% endblock %}
+{% block content %}
+<div class="creator-layout">
+    <aside class="creator-side">
+        <div class="creator-user"><div class="avatar-circle">{{ current_user.username[:1]|upper }}</div><div><strong>{{ current_user.username }}</strong><span>管理员</span></div></div>
+        <a href="/my">作品管理</a><a class="active" href="/admin/users">用户管理</a><a href="/user/{{ current_user.id }}">个人主页</a>
+    </aside>
+    <section class="creator-main">
+        <div class="section-heading"><div><h1>用户管理</h1><p>查看账号、投稿和评论数据，并管理用户角色</p></div><span class="result-count">{{ users|length }} 个账号</span></div>
+        <div class="user-table-wrap">
+            <table class="user-table">
+                <thead><tr><th>用户</th><th>角色</th><th>作品</th><th>评论</th><th>注册时间</th><th>操作</th></tr></thead>
+                <tbody>{% for user in users %}<tr><td><a class="user-cell" href="/user/{{ user.id }}"><span class="tiny-avatar">{{ user.username[:1]|upper }}</span><div><strong>{{ user.username }}</strong><span>ID {{ user.id }}</span></div></a></td><td><span class="role-badge {{ 'admin' if user.is_admin else '' }}">{{ '管理员' if user.is_admin else '普通用户' }}</span></td><td>{{ media_counts.get(user.id, 0) }}</td><td>{{ comment_counts.get(user.id, 0) }}</td><td>{{ user.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{% if user.id != current_user.id %}<form action="/admin/users/{{ user.id }}/role" method="post"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="btn btn-sm btn-outline-primary">{{ '取消管理员' if user.is_admin else '设为管理员' }}</button></form>{% else %}<span class="text-secondary small">当前账号</span>{% endif %}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.username }} - MediaHub{% endblock %}
+{% block content %}
+<section class="profile-banner">
+    <div class="profile-main"><div class="avatar-circle profile-avatar">{{ profile_user.username[:1]|upper }}</div><div><h1>{{ profile_user.username }}</h1><p>加入于 {{ profile_user.created_at.strftime("%Y-%m-%d") }}{% if profile_user.is_admin %} · 管理员{% endif %}</p></div></div>
+    <div class="profile-stats"><div><strong>{{ items|length }}</strong><span>作品</span></div><div><strong>{{ total_views }}</strong><span>浏览</span></div><div><strong>{{ total_downloads }}</strong><span>下载</span></div></div>
+</section>
+<div class="profile-tabs"><span class="active">投稿</span>{% if current_user and current_user.id == profile_user.id %}<a href="/my">作品管理</a><a href="/upload">上传</a>{% endif %}</div>
+{% if items %}<div class="media-grid">
+{% for item in items %}<article class="media-card"><a href="/media/{{ item.id }}" class="media-thumb">{% if item.media_type == "image" %}<img src="/content/{{ item.id }}" alt="{{ item.title }}" loading="lazy">{% else %}<video muted preload="metadata"><source src="/content/{{ item.id }}" type="{{ item.mime_type }}"></video><span class="video-badge">▶ 视频</span>{% endif %}{% if not item.is_visible %}<span class="hidden-badge">未公开</span>{% endif %}<div class="thumb-stats"><span>👁 {{ item.views }}</span><span>↓ {{ item.downloads }}</span></div></a><div class="media-card-body"><h2><a href="/media/{{ item.id }}">{{ item.title }}</a></h2><div class="card-meta"><span>{{ item.created_at.strftime("%Y-%m-%d") }}</span><a class="quick-download" href="/download/{{ item.id }}">下载</a></div></div></article>{% endfor %}
+</div>{% else %}<div class="empty-panel"><h2>暂无作品</h2><p>这个用户暂时没有可展示的内容。</p></div>{% endif %}
+{% endblock %}

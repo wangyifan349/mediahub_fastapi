@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}投稿 - MediaHub{% endblock %}
+{% block content %}
+<div class="creator-layout">
+    <aside class="creator-side">
+        <div class="creator-user"><div class="avatar-circle">{{ current_user.username[:1]|upper }}</div><div><strong>{{ current_user.username }}</strong><span>{% if current_user.is_admin %}管理员{% else %}创作者{% endif %}</span></div></div>
+        <a href="/my">作品管理</a><a class="active" href="/upload">上传作品</a><a href="/user/{{ current_user.id }}">个人主页</a>{% if current_user.is_admin %}<a href="/admin/users">用户管理</a>{% endif %}
+    </aside>
+    <section class="creator-main">
+        <div class="section-heading"><div><h1>投稿</h1><p>上传图片或视频，发布后即可在首页和个人主页展示</p></div></div>
+        <form action="/upload" method="post" enctype="multipart/form-data" class="upload-panel">
+            <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+            <div class="upload-drop">
+                <div class="upload-symbol">＋</div>
+                <h2>选择图片或视频</h2>
+                <p>JPG / PNG / GIF / WebP · MP4 / WebM / MOV / M4V · 单文件最大 1 GiB</p>
+                <input class="form-control" type="file" name="media_file" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime" required>
+            </div>
+            <div class="upload-fields">
+                <div><label class="form-label">作品标题</label><input class="form-control form-control-lg" name="title" maxlength="120" placeholder="给作品起一个清晰的标题" required></div>
+                <div><label class="form-label">作品简介</label><textarea class="form-control" name="description" rows="7" placeholder="介绍一下这个作品……"></textarea></div>
+                <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="isVisible" name="is_visible" value="true" checked><label class="form-check-label" for="isVisible">上传后公开展示</label><div class="form-text">关闭后只有你和管理员可查看，之后可以在创作中心重新公开。</div></div>
+                <button class="btn btn-primary btn-lg upload-submit">开始上传</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

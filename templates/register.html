@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}注册 - MediaHub{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <section class="auth-card">
+        <a class="auth-brand" href="/"><span>▶</span> MediaHub</a>
+        <div class="auth-heading"><h1>创建账号</h1><p>注册后可以上传作品、评论并管理展示状态。</p></div>
+        <form method="post" action="/register" class="auth-form">
+            <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+            <label>用户名<input class="form-control" name="username" minlength="3" maxlength="50" autocomplete="username" required></label>
+            <label>密码<input class="form-control" type="password" name="password" autocomplete="new-password" required><small>密码不设置长度限制。</small></label>
+            <button class="btn btn-primary w-100" type="submit">注册</button>
+        </form>
+        <div class="auth-foot">已经有账号？<a href="/login">直接登录</a></div>
+    </section>
+</div>
+{% endblock %}

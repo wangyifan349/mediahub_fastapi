@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}MediaHub - 首页{% endblock %}
+{% block content %}
+<section class="channel-strip mb-4">
+    <div class="channel-title"><div class="channel-logo">M</div><div><strong>发现内容</strong><span>最新公开作品</span></div></div>
+    <div class="channel-links"><a class="{% if kind == 'all' %}active{% endif %}" href="/?q={{ q }}">全部 <span>{{ public_count }}</span></a><a class="{% if kind == 'video' %}active{% endif %}" href="/?kind=video&q={{ q }}">视频 <span>{{ video_count }}</span></a><a class="{% if kind == 'image' %}active{% endif %}" href="/?kind=image&q={{ q }}">图片 <span>{{ image_count }}</span></a>{% if current_user %}<a href="/upload">+ 发布作品</a>{% endif %}</div>
+</section>
+{% if q and user_results %}
+<section class="search-users mb-4">
+    <div class="section-heading mb-2"><div><h2>相关用户</h2><p>按最长公共子序列匹配度降序</p></div><span class="result-count">{{ user_results|length }} 个</span></div>
+    <div class="user-result-row">{% for user in user_results %}<a class="user-result-card" href="/user/{{ user.id }}"><span class="mini-avatar">{{ user.username[:1]|upper }}</span><span><strong>{{ user.username }}</strong><small>查看主页</small></span></a>{% endfor %}</div>
+</section>
+{% endif %}
+<div class="section-heading mb-3"><div><h1>{% if q %}“{{ q }}”的作品结果{% else %}推荐内容{% endif %}</h1><p>{% if q %}标题和作者使用 LCS 匹配并降序排列{% else %}按最新发布时间展示{% endif %}</p></div><span class="result-count">共 {{ items|length }} 个</span></div>
+{% if items %}
+<div class="media-grid">{% for item in items %}<article class="media-card"><a href="/media/{{ item.id }}" class="media-thumb">{% if item.media_type == "image" %}<img src="/content/{{ item.id }}" alt="{{ item.title }}" loading="lazy">{% else %}<video muted preload="metadata"><source src="/content/{{ item.id }}" type="{{ item.mime_type }}"></video><span class="video-badge">▶ 视频</span>{% endif %}<div class="thumb-stats"><span>👁 {{ item.views }}</span><span>↓ {{ item.downloads }}</span></div></a><div class="media-card-body"><h2><a href="/media/{{ item.id }}">{{ item.title }}</a></h2><div class="card-meta"><a class="owner-link" href="/user/{{ item.owner.id }}"><span class="tiny-avatar">{{ item.owner.username[:1]|upper }}</span>{{ item.owner.username }}</a><a class="quick-download" href="/download/{{ item.id }}" title="下载原文件">下载</a></div></div></article>{% endfor %}</div>
+{% else %}<div class="empty-panel"><div class="empty-icon">⌕</div><h2>暂时没有匹配内容</h2><p>可以换一个关键词，顶部搜索会实时给出相近的视频和用户。</p>{% if current_user %}<a href="/upload" class="btn btn-primary">上传作品</a>{% endif %}</div>{% endif %}
+{% endblock %}
